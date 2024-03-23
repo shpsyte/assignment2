@@ -1,6 +1,22 @@
+
 #include <stdio.h>
 
 #define MAX_SIZE 100
+
+// Function to calculate the cross product of two vectors
+int crossProduct(int x1, int y1, int x2, int y2) {
+    return x1 * y2 - x2 * y1;
+}
+
+// Function to check if a point (x, y) is inside the triangle formed by (x1, y1), (x2, y2), and (x3, y3)
+int isInsideTriangle(int x, int y, int x1, int y1, int x2, int y2, int x3, int y3) {
+    int cross1 = crossProduct(x - x1, y - y1, x2 - x1, y2 - y1);
+    int cross2 = crossProduct(x - x2, y - y2, x3 - x2, y3 - y2);
+    int cross3 = crossProduct(x - x3, y - y3, x1 - x3, y1 - y3);
+
+    // If the cross products have the same sign, the point is inside the triangle
+    return (cross1 >= 0 && cross2 >= 0 && cross3 >= 0) || (cross1 <= 0 && cross2 <= 0 && cross3 <= 0);
+}
 
 void drawLine(char inputFileName[], char outputFileName[]) {
     FILE *inputFile, *outputFile;
@@ -41,14 +57,34 @@ void drawLine(char inputFileName[], char outputFileName[]) {
     // Close input file
     fclose(inputFile);
 
-    // Fill in the spaces within the shape
-    for (i = 0; i <= maxY; i++) {
-        int inside = 0;
-        for (j = 0; j <= maxX; j++) {
-            if (grid[i][j] == '*') {
-                inside = !inside;
-            } else if (inside) {
-                grid[i][j] = '*';
+    // Fill in the spaces within the shape for triangles
+    int x1, y1, x2, y2, x3, y3;
+    int minX, maxXTriangle, minY, maxYTriangle;
+    for (i = 0; i < maxY; i++) {
+        for (j = 0; j < maxX; j++) {
+            if (grid[i][j] != '*') {
+                // Check if the point is inside any of the triangles
+                for (int k = 0; k < maxY; k++) {
+                    if (grid[k][j] == '*' && grid[k][j + 1] == '*' && grid[k + 1][j] == '*') {
+                        // Found a triangle
+                        x1 = j; y1 = k;
+                        x2 = j + 1; y2 = k;
+                        x3 = j; y3 = k + 1;
+
+                        minX = (x1 < x2) ? x1 : x2;
+                        minX = (minX < x3) ? minX : x3;
+                        maxXTriangle = (x1 > x2) ? x1 : x2;
+                        maxXTriangle = (maxXTriangle > x3) ? maxXTriangle : x3;
+
+                        minY = (y1 < y2) ? y1 : y2;
+                        minY = (minY < y3) ? minY : y3;
+                        maxYTriangle = (y1 > y2) ? y1 : y2;
+                        maxYTriangle = (maxYTriangle > y3) ? maxYTriangle : y3;
+
+                        if (isInsideTriangle(j, i, x1, y1, x2, y2, x3, y3) && i >= minY && i <= maxYTriangle && j >= minX && j <= maxXTriangle)
+                            grid[i][j] = '*';
+                    }
+                }
             }
         }
     }
