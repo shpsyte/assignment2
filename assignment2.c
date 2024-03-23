@@ -3,21 +3,6 @@
 
 #define MAX_SIZE 100
 
-// Function to calculate the cross product of two vectors
-int crossProduct(int x1, int y1, int x2, int y2) {
-    return x1 * y2 - x2 * y1;
-}
-
-// Function to check if a point (x, y) is inside the triangle formed by (x1, y1), (x2, y2), and (x3, y3)
-int isInsideTriangle(int x, int y, int x1, int y1, int x2, int y2, int x3, int y3) {
-    int cross1 = crossProduct(x - x1, y - y1, x2 - x1, y2 - y1);
-    int cross2 = crossProduct(x - x2, y - y2, x3 - x2, y3 - y2);
-    int cross3 = crossProduct(x - x3, y - y3, x1 - x3, y1 - y3);
-
-    // If the cross products have the same sign, the point is inside the triangle
-    return (cross1 >= 0 && cross2 >= 0 && cross3 >= 0) || (cross1 <= 0 && cross2 <= 0 && cross3 <= 0);
-}
-
 void drawLine(char inputFileName[], char outputFileName[]) {
     FILE *inputFile, *outputFile;
     int x, y, prev_x = -1, prev_y = -1, maxX = 0, maxY = 0, i, j;
@@ -48,6 +33,15 @@ void drawLine(char inputFileName[], char outputFileName[]) {
                 int end = (prev_x < x) ? x : prev_x;
                 for (j = start; j <= end; j++)
                     grid[y][j] = '*';
+            } else {
+                // Diagonal line (triangle)
+                double slope = (double)(y - prev_y) / (x - prev_x);
+                int start_x = (prev_x < x) ? prev_x : x;
+                int end_x = (prev_x < x) ? x : prev_x;
+                for (i = start_x; i <= end_x; i++) {
+                    int j = prev_y + (int)(slope * (i - prev_x));
+                    grid[j][i] = '*';
+                }
             }
         }
         prev_x = x;
@@ -56,38 +50,6 @@ void drawLine(char inputFileName[], char outputFileName[]) {
 
     // Close input file
     fclose(inputFile);
-
-    // Fill in the spaces within the shape for triangles
-    int x1, y1, x2, y2, x3, y3;
-    int minX, maxXTriangle, minY, maxYTriangle;
-    for (i = 0; i < maxY; i++) {
-        for (j = 0; j < maxX; j++) {
-            if (grid[i][j] != '*') {
-                // Check if the point is inside any of the triangles
-                for (int k = 0; k < maxY; k++) {
-                    if (grid[k][j] == '*' && grid[k][j + 1] == '*' && grid[k + 1][j] == '*') {
-                        // Found a triangle
-                        x1 = j; y1 = k;
-                        x2 = j + 1; y2 = k;
-                        x3 = j; y3 = k + 1;
-
-                        minX = (x1 < x2) ? x1 : x2;
-                        minX = (minX < x3) ? minX : x3;
-                        maxXTriangle = (x1 > x2) ? x1 : x2;
-                        maxXTriangle = (maxXTriangle > x3) ? maxXTriangle : x3;
-
-                        minY = (y1 < y2) ? y1 : y2;
-                        minY = (minY < y3) ? minY : y3;
-                        maxYTriangle = (y1 > y2) ? y1 : y2;
-                        maxYTriangle = (maxYTriangle > y3) ? maxYTriangle : y3;
-
-                        if (isInsideTriangle(j, i, x1, y1, x2, y2, x3, y3) && i >= minY && i <= maxYTriangle && j >= minX && j <= maxXTriangle)
-                            grid[i][j] = '*';
-                    }
-                }
-            }
-        }
-    }
 
     // Open output file
     outputFile = fopen(outputFileName, "w");
